@@ -540,7 +540,7 @@
 
     <script>
         // Configuration de l'expérience
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz0zAmRJW8-izf820v1rG6UmEzoW45dxrbWScaTFmx8UPKE4hfpU_sWzWJA4qnVWuwF/exec';
+        const SUBMIT_URL = '/.netlify/functions/save-data';
         
         // Détection mobile
         if (window.innerWidth < 1024) {
@@ -795,21 +795,33 @@
             
             titleEl.textContent = 'Envoi en cours...';
             messageEl.textContent = 'Vos réponses sont en cours d\'envoi. Merci de ne pas fermer cette fenêtre.';
+
+            let allOk = true;
+
+            // Envoyer chaque condition séparément (une ligne CSV par condition)
+            for (const condition of participantData.conditions) {
+                try {
+                    const response = await fetch(SUBMIT_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            participantId: participantData.participantId,
+                            age: participantData.age,
+                            gender: participantData.gender,
+                            startTime: participantData.startTime,
+                            condition: condition
+                        })
+                    });
+                    if (!response.ok) allOk = false;
+                } catch(e) {
+                    allOk = false;
+                }
+            }
             
-            try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(participantData)
-                });
-                
+            if (allOk) {
                 titleEl.textContent = 'Merci !';
                 messageEl.textContent = 'Vos réponses ont bien été enregistrées. Vous pouvez maintenant fermer cette fenêtre.';
-                
-            } catch (error) {
-                console.error('Error submitting data:', error);
-                
+            } else {
                 titleEl.textContent = 'Merci !';
                 messageEl.textContent = 'Une erreur est survenue lors de l\'envoi. Vos données ont été enregistrées localement.';
                 statusEl.textContent = 'Code participant : ' + participantData.participantId;
