@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Étude sur la perception de comportements robotiques</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        /* Avertissement mobile */
+        #mobile-warning {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #1a1a2e;
+            z-index: 9999;
+            padding: 40px 20px;
+            text-align: center;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #mobile-warning h2 {
+            color: #e94560;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+        
+        #mobile-warning p {
+            color: #eee;
+            font-size: 16px;
+            line-height: 1.8;
+            max-width: 400px;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            background: #16213e;
+            padding: 30px 40px;
+            border-radius: 12px;
+        }
+        
+        h1 {
+            color: #e94560;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+        
+        h2 {
+            color: #4A90E2;
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+        
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        /* Layout deux colonnes pour les conditions */
+        .condition-layout {
+            display: grid;
+            grid-template-columns: 460px 1fr;
+            gap: 30px;
+            align-items: start;
+            margin-top: 15px;
+        }
+        
+        .condition-left {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .condition-right {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        canvas {
+            display: block;
+            border: 2px solid #0f3460;
+            background: #0f3460;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        button {
+            background: #e94560;
+            border: none;
+            color: white;
+            padding: 10px 25px;
+            font-size: 15px;
+            cursor: pointer;
+            border-radius: 6px;
+            margin: 5px;
+            font-weight: 500;
+        }
+        
+        button:hover {
+            background: #c23b52;
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        .likert-question {
+            margin: 8px 0;
+            padding: 12px 15px;
+            background: #0f3460;
+            border-radius: 8px;
+        }
+        
+        .likert-question label {
+            display: block;
+            margin-bottom: 12px;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        
+        .likert-scale {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        
+        .likert-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .likert-option input[type="radio"] {
+            width: 22px;
+            height: 22px;
+            margin-bottom: 4px;
+            cursor: pointer;
+        }
+        
+        .likert-option span {
+            font-size: 12px;
+            color: #aaa;
+        }
+        
+        .likert-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #aaa;
+            font-style: italic;
+        }
+        
+        .demo-field {
+            margin: 20px 0;
+        }
+        
+        .demo-field label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .demo-field input, .demo-field select {
+            width: 100%;
+            max-width: 300px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #0f3460;
+            border-radius: 6px;
+            background: #0f3460;
+            color: #eee;
+        }
+        
+        .progress {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #aaa;
+        }
+        
+        .info-text {
+            background: #0f3460;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        
+        .consent-text {
+            margin: 20px 0;
+            line-height: 1.8;
+        }
+        
+        .consent-text p {
+            margin-bottom: 12px;
+        }
+
+        .consent-text p.instructions-block {
+            background: #0f3460;
+            padding: 15px 18px;
+            border-radius: 8px;
+            border-left: 3px solid #4A90E2;
+            font-size: 15px;
+        }
+        
+        .error {
+            color: #e94560;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .next-btn-container {
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        /* Timer d'observation */
+        .observation-timer {
+            margin: 10px 0;
+            text-align: center;
+            font-size: 16px;
+            color: #aaa;
+        }
+
+        .timer-bar-container {
+            width: 100%;
+            height: 6px;
+            background: #0f3460;
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .timer-bar {
+            height: 100%;
+            background: #4A90E2;
+            border-radius: 3px;
+            width: 100%;
+            transition: width 1s linear;
+        }
+
+        /* Questions masquées pendant l'observation */
+        .questions-hidden {
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* Page lettre d'information - style INRIA (blanc sur fond blanc) */
+        #page-info {
+            background: #fff;
+            color: #111;
+            min-height: 100vh;
+            margin: -20px -40px -20px -40px;
+            padding: 0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .inria-header {
+            background: #fff;
+            border-bottom: 1px solid #ddd;
+            padding: 18px 40px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .inria-header .institution {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        .inria-body {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 36px 40px 48px 40px;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 15px;
+            line-height: 1.75;
+            color: #111;
+        }
+
+        .inria-body h1 {
+            color: #111;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+
+        .inria-body .study-title {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 28px;
+            font-style: italic;
+        }
+
+        .inria-body .section-label {
+            font-weight: bold;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #111;
+            margin-top: 28px;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .inria-body p {
+            margin-bottom: 12px;
+            color: #111;
+        }
+
+        .inria-body a {
+            color: #0055a5;
+        }
+
+        .inria-divider {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 24px 0;
+        }
+
+        .inria-consent {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin: 28px 0 8px 0;
+            padding: 16px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .inria-consent input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            margin-top: 3px;
+            cursor: pointer;
+        }
+
+        .inria-consent label {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #111;
+            cursor: pointer;
+        }
+
+        .inria-error {
+            color: #c00;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .inria-btn {
+            background: #0055a5;
+            border: none;
+            color: white;
+            padding: 10px 28px;
+            font-size: 15px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+        }
+
+        .inria-btn:hover {
+            background: #003d7a;
+        }
+
+        /* Fondu entre conditions */
+        .fade-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: black;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- Avertissement mobile -->
+    <div id="mobile-warning">
+        <h2>Appareil non compatible</h2>
+        <p>Cette étude est conçue pour être réalisée sur un ordinateur. Merci de vous connecter depuis un écran plus grand (minimum 1024px de large).</p>
+    </div>
+
+    <!-- Overlay pour fondu -->
+    <div class="fade-overlay" id="fade-overlay"></div>
+
+    <div class="container">
+        <!-- Page lettre d'information - style INRIA -->
+        <div id="page-info" class="page active">
+            <div class="inria-header">
+                <div class="institution">
+                    <strong>Université de Technologie de Compiègne (UTC)</strong><br>
+                    Laboratoire Costech
+                </div>
+            </div>
+            <div class="inria-body">
+                <h1>Répertoire d'actions et expressivité perçue : étude de la perception de l'agentivité robotique</h1>
+                <p class="study-title">Lettre d'information aux participants</p>
+
+                <span class="section-label">Responsable du projet</span>
+                <p>Levillain Florent, Université de Technologie de Compiègne (UTC), Laboratoire Costech<br>
+                Contact : <a href="mailto:florent.levillain@utc.fr">florent.levillain@utc.fr</a></p>
+
+                <hr class="inria-divider">
+
+                <p><strong>Bonjour,</strong></p>
+                <p>Nous vous invitons à participer à une étude visant à mieux comprendre la façon dont les gens perçoivent les mouvements d'un robot simple. Cependant, avant d'accepter de participer, veuillez prendre le temps de lire attentivement les informations suivantes.</p>
+                <p><strong>Durée estimée : 15 à 30 minutes.</strong></p>
+
+                <hr class="inria-divider">
+
+                <span class="section-label">Votre participation au projet</span>
+
+                <p><strong>Le but de l'étude</strong> est d'explorer les facteurs qui déterminent si les mouvements d'un robot sont perçus comme expressifs, intentionnels ou imprévisibles. Pour cela, nous vous demandons d'observer de courtes animations d'un robot et de répondre à quelques questions sur vos impressions.</p>
+
+                <p><strong>Engagement du chercheur responsable</strong> : le chercheur responsable s'engage à mener cette recherche selon les dispositions éthiques et déontologiques en vigueur, en garantissant notamment qu'elle ne porte pas atteinte à l'intégrité physique, psychologique et sociale des participants et en assurant la confidentialité des informations recueillies.</p>
+
+                <p><strong>Participation volontaire</strong> : votre participation est entièrement volontaire et n'implique aucune rémunération. Vous pouvez arrêter à tout moment, sans avoir à vous justifier et sans aucune conséquence.</p>
+
+                <p><strong>Liberté de retrait</strong> : vous êtes totalement libre de mettre fin à votre participation à n'importe quel moment. Attention : les données étant pseudonymisées sans clé de correspondance, il ne sera pas possible de les identifier ni de les supprimer après soumission.</p>
+
+                <p><strong>Données collectées</strong> : nous collectons vos réponses aux questions (scores sur des échelles numériques), le temps que vous prenez pour répondre, ainsi que votre âge et votre genre. Un identifiant technique est généré automatiquement au chargement de la page ; il sert uniquement à relier vos réponses entre elles et ne vous est pas communiqué. Aucun nom, prénom, adresse e-mail ou adresse IP n'est enregistré.</p>
+
+                <p><strong>Confidentialité des informations</strong> : les données collectées ne sont ni nominatives ni identifiantes. Elles ne permettent pas votre identification. Toutes les données recueillies seront utilisées exclusivement à des fins de recherche scientifique, sous forme agrégée et anonymisée, conformément au Règlement Général sur la Protection des Données (RGPD).</p>
+
+                <p><strong>Demande d'informations</strong> : si vous avez des questions sur cette étude, n'hésitez pas à contacter le chercheur responsable à l'adresse indiquée ci-dessus.</p>
+
+                <p><strong>Résultats de la recherche</strong> : si vous souhaitez obtenir un résumé des principaux résultats, vous pouvez en faire la demande auprès du chercheur responsable.</p>
+
+                <p><strong>Merci d'avance pour votre participation !</strong></p>
+
+                <hr class="inria-divider">
+
+                <div class="inria-consent">
+                    <input type="checkbox" id="consent-check">
+                    <label for="consent-check">J'ai lu et compris les informations ci-dessus. Je consens librement à participer à cette étude.</label>
+                </div>
+
+                <div class="inria-error" id="consent-error" style="display:none;">
+                    Veuillez cocher la case de consentement pour continuer.
+                </div>
+
+                <button class="inria-btn" onclick="goToWelcome()">Suivant →</button>
+            </div>
+        </div>
+
+        <!-- Page d'accueil -->
+        <div id="page-welcome" class="page">
+            <h1>Étude sur la perception de comportements robotiques</h1>
+            
+            <div class="consent-text">
+                <p>Merci de votre participation à cette étude.</p>
+
+                <p class="instructions-block">
+                    Imaginez que vous êtes chargé(e) d'évaluer un nouveau robot. Votre rôle n'est pas de déterminer si ce robot est <em>réellement</em> intelligent ou vivant — vous savez que c'est une machine. Il s'agit d'évaluer dans quelle mesure son comportement est susceptible de <strong>susciter des réactions spontanées</strong> chez les personnes qui l'observeront : l'impression d'avoir affaire à quelque chose de vivant, d'intentionnel, d'imprévisible, d'intelligent.<br><br>
+                    Pour chaque séquence, laissez-vous guider par vos impressions immédiates. Ce sont précisément ces impressions — pas votre jugement rationnel sur la nature du robot — qui nous intéressent.
+                </p>
+
+                <p>Vous allez observer 12 courtes animations, puis répondre à quelques questions sur vos impressions pour chacune d'elles.</p>
+                <p><strong>Durée estimée :</strong> 15 à 30 minutes</p>
+                <p><strong>Confidentialité :</strong> Vos réponses sont pseudonymisées et utilisées uniquement à des fins de recherche.</p>
+            </div>
+            
+            <h2>Informations démographiques</h2>
+            <div class="demo-field">
+                <label for="age">Âge :</label>
+                <input type="number" id="age" min="18" max="100" placeholder="Votre âge">
+            </div>
+            
+            <div class="demo-field">
+                <label for="gender">Genre :</label>
+                <select id="gender">
+                    <option value="">Sélectionnez</option>
+                    <option value="femme">Femme</option>
+                    <option value="homme">Homme</option>
+                    <option value="autre">Autre</option>
+                    <option value="non-specifie">Préfère ne pas répondre</option>
+                </select>
+            </div>
+            
+            <div class="error" id="demo-error" style="display: none;">
+                Veuillez remplir tous les champs
+            </div>
+            
+            <div class="controls">
+                <button onclick="startExperiment()">Commencer l'étude</button>
+            </div>
+        </div>
+        
+        <!-- Pages de conditions (générées dynamiquement) -->
+        <div id="condition-pages"></div>
+        
+        <!-- Page de fin -->
+        <div id="page-end" class="page">
+            <h1 id="end-title">Envoi en cours...</h1>
+            <div class="info-text">
+                <p id="end-message">Vos réponses sont en cours d'envoi. Merci de ne pas fermer cette fenêtre.</p>
+                <p id="submission-status"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration de l'expérience
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz0zAmRJW8-izf820v1rG6UmEzoW45dxrbWScaTFmx8UPKE4hfpU_sWzWJA4qnVWuwF/exec';
+        
+        // Détection mobile
+        if (window.innerWidth < 1024) {
+            document.getElementById('mobile-warning').style.display = 'flex';
+        }
+        
+        // Données du participant
+        let participantData = {
+            participantId: generateParticipantId(),
+            age: null,
+            gender: null,
+            conditions: [],
+            startTime: new Date().toISOString()
+        };
+        
+        // Définition des conditions (3 répertoires × 2 modes × 2 affichages = 12)
+        const CONDITIONS = [
+            { points: 2, mode: 'sequential', showMarkers: false },
+            { points: 2, mode: 'random',     showMarkers: false },
+            { points: 3, mode: 'sequential', showMarkers: false },
+            { points: 3, mode: 'random',     showMarkers: false },
+            { points: 6, mode: 'sequential', showMarkers: false },
+            { points: 6, mode: 'random',     showMarkers: false },
+            { points: 2, mode: 'sequential', showMarkers: true  },
+            { points: 2, mode: 'random',     showMarkers: true  },
+            { points: 3, mode: 'sequential', showMarkers: true  },
+            { points: 3, mode: 'random',     showMarkers: true  },
+            { points: 6, mode: 'sequential', showMarkers: true  },
+            { points: 6, mode: 'random',     showMarkers: true  }
+        ];
+        
+        // Randomiser l'ordre des conditions
+        const conditionOrder = shuffleArray([...Array(CONDITIONS.length).keys()]);
+        let currentConditionIndex = 0;
+        
+        // Questions (échelles de Likert 1-7)
+        const QUESTIONS = [
+            {
+                id: 'animacy',
+                text: 'Ce robot donne l\'impression d\'être vivant',
+                labels: { left: 'Pas du tout d\'accord', right: 'Tout à fait d\'accord' }
+            },
+            {
+                id: 'intentionality',
+                text: 'Ce robot donne l\'impression d\'agir intentionnellement',
+                labels: { left: 'Pas du tout d\'accord', right: 'Tout à fait d\'accord' }
+            },
+            {
+                id: 'predictability',
+                text: 'Le prochain mouvement de ce robot est facile à prédire',
+                labels: { left: 'Pas du tout d\'accord', right: 'Tout à fait d\'accord' }
+            },
+            {
+                id: 'intelligence',
+                text: 'Ce robot donne l\'impression d\'être intelligent',
+                labels: { left: 'Pas du tout d\'accord', right: 'Tout à fait d\'accord' }
+            }
+        ];
+        
+        function goToWelcome() {
+            if (!document.getElementById('consent-check').checked) {
+                document.getElementById('consent-error').style.display = 'block';
+                return;
+            }
+            showPage('page-info', 'page-welcome');
+        }
+
+        function generateParticipantId() {
+            return 'P' + Date.now() + Math.random().toString(36).substr(2, 9);
+        }
+        
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        function startExperiment() {
+            const age = document.getElementById('age').value;
+            const gender = document.getElementById('gender').value;
+            
+            if (!age || !gender) {
+                document.getElementById('demo-error').style.display = 'block';
+                return;
+            }
+            
+            participantData.age = parseInt(age);
+            participantData.gender = gender;
+            
+            // Créer les pages de conditions
+            createConditionPages();
+            
+            // Passer à la première condition
+            showPage('page-welcome', 'condition-0', () => {
+                startAnimation(0);
+            });
+        }
+        
+        function createConditionPages() {
+            const container = document.getElementById('condition-pages');
+            
+            conditionOrder.forEach((condIndex, i) => {
+                const condition = CONDITIONS[condIndex];
+                const pageId = `condition-${i}`;
+                
+                const pageDiv = document.createElement('div');
+                pageDiv.id = pageId;
+                pageDiv.className = 'page';
+                
+                pageDiv.innerHTML = `
+                    <div class="progress">Condition ${i + 1} sur ${CONDITIONS.length}</div>
+                    <h1>Observation ${i + 1}</h1>
+                    <div class="condition-layout">
+                        <div class="condition-left">
+                            <div class="info-text">
+                                Observez attentivement l'animation ci-dessous.
+                            </div>
+                            <canvas id="canvas-${i}" width="450" height="450"></canvas>
+                        </div>
+                        <div class="condition-right" id="questions-panel-${i}">
+                            <h2>Veuillez évaluer les affirmations suivantes :</h2>
+                            <div id="questions-${i}"></div>
+                            <div class="error" id="error-${i}" style="display: none;">
+                                Veuillez répondre à toutes les questions avant de continuer.
+                            </div>
+                            <div class="next-btn-container">
+                                <button onclick="submitCondition(${i})">Suivant →</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(pageDiv);
+                
+                // Créer les questions
+                const questionsDiv = document.getElementById(`questions-${i}`);
+                QUESTIONS.forEach(q => {
+                    const questionDiv = document.createElement('div');
+                    questionDiv.className = 'likert-question';
+                    questionDiv.innerHTML = `
+                        <label>${q.text}</label>
+                        <div class="likert-scale">
+                            ${[1, 2, 3, 4, 5].map(val => `
+                                <div class="likert-option">
+                                    <input type="radio" name="${pageId}-${q.id}" value="${val}" id="${pageId}-${q.id}-${val}" onchange="recordFirstResponse(${i})">
+                                    <span>${val}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="likert-labels">
+                            <span>${q.labels.left}</span>
+                            <span>${q.labels.right}</span>
+                        </div>
+                    `;
+                    questionsDiv.appendChild(questionDiv);
+                });
+                
+                // Initialiser l'animation pour cette condition
+                initAnimation(i, condition.points, condition.mode, condition.showMarkers);
+            });
+        }
+        
+        function showPage(fromId, toId, callback) {
+            const overlay = document.getElementById('fade-overlay');
+            
+            // Fondu au noir
+            overlay.style.display = 'block';
+            requestAnimationFrame(() => {
+                overlay.style.opacity = '1';
+            });
+            
+            setTimeout(() => {
+                // Changer de page au milieu du fondu
+                document.getElementById(fromId).classList.remove('active');
+                document.getElementById(toId).classList.add('active');
+                window.scrollTo({ top: 0, behavior: 'instant' });
+                if (callback) callback();
+                
+                // Fondu depuis le noir
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 500);
+            }, 500);
+        }
+        
+        function submitCondition(conditionIndex) {
+            const pageId = `condition-${conditionIndex}`;
+            const responses = {};
+            
+            // Vérifier que toutes les questions ont une réponse
+            let allAnswered = true;
+            QUESTIONS.forEach(q => {
+                const selected = document.querySelector(`input[name="${pageId}-${q.id}"]:checked`);
+                if (selected) {
+                    responses[q.id] = parseInt(selected.value);
+                } else {
+                    allAnswered = false;
+                }
+            });
+            
+            if (!allAnswered) {
+                document.getElementById(`error-${conditionIndex}`).style.display = 'block';
+                return;
+            }
+            
+            // Arrêter l'animation
+            stopAnimation(conditionIndex);
+            
+            // Calculer les métriques temporelles
+            const anim = animations[conditionIndex];
+            const endTime = Date.now();
+            const totalTime = endTime - anim.startTime;
+            const timeToFirstResponse = anim.firstResponseTime ? (anim.firstResponseTime - anim.startTime) : null;
+            
+            // Enregistrer les données
+            const actualConditionIndex = conditionOrder[conditionIndex];
+            const condition = CONDITIONS[actualConditionIndex];
+            
+            participantData.conditions.push({
+                order: conditionIndex + 1,
+                points: condition.points,
+                mode: condition.mode,
+                showMarkers: condition.showMarkers,
+                responses: responses,
+                timing: {
+                    totalTimeMs: totalTime,
+                    timeToFirstResponseMs: timeToFirstResponse
+                },
+                timestamp: new Date().toISOString()
+            });
+            
+            // Passer à la condition suivante ou à la fin
+            if (conditionIndex < CONDITIONS.length - 1) {
+                showPage(`condition-${conditionIndex}`, `condition-${conditionIndex + 1}`, () => {
+                    startAnimation(conditionIndex + 1);
+                });
+            } else {
+                submitData();
+                showPage(`condition-${conditionIndex}`, 'page-end');
+            }
+        }
+        
+        async function submitData() {
+            participantData.endTime = new Date().toISOString();
+            
+            const titleEl = document.getElementById('end-title');
+            const messageEl = document.getElementById('end-message');
+            const statusEl = document.getElementById('submission-status');
+            
+            titleEl.textContent = 'Envoi en cours...';
+            messageEl.textContent = 'Vos réponses sont en cours d\'envoi. Merci de ne pas fermer cette fenêtre.';
+            
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(participantData)
+                });
+                
+                titleEl.textContent = 'Merci !';
+                messageEl.textContent = 'Vos réponses ont bien été enregistrées. Vous pouvez maintenant fermer cette fenêtre.';
+                
+            } catch (error) {
+                console.error('Error submitting data:', error);
+                
+                titleEl.textContent = 'Merci !';
+                messageEl.textContent = 'Une erreur est survenue lors de l\'envoi. Vos données ont été enregistrées localement.';
+                statusEl.textContent = 'Code participant : ' + participantData.participantId;
+                downloadData();
+            }
+        }
+        
+        function downloadData() {
+            const dataStr = JSON.stringify(participantData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `participant_${participantData.participantId}.json`;
+            link.click();
+        }
+        
+        // Animation
+        const animations = [];
+        
+        function initAnimation(index, pointCount, mode, showMarkers) {
+            const canvas = document.getElementById(`canvas-${index}`);
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = false;
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const pointRadius = 150;
+            const markerRadius = 190; // Rayon des marqueurs visuels, plus grand que le robot
+
+            // Points comportementaux (angles que le robot visite)
+            // Pour les conditions avec marqueurs, les angles doivent coïncider
+            // avec un sous-ensemble équidistant des 6 positions à 60° d'intervalle
+            const points = [];
+            if (showMarkers) {
+                // Sous-ensemble équidistant des 6 marqueurs :
+                // 2 points → 1 marqueur sur 3 (0°, 180°)
+                // 3 points → 1 marqueur sur 2 (0°, 120°, 240°)
+                // 6 points → tous les marqueurs (0°, 60°, 120°, 180°, 240°, 300°)
+                const step = 6 / pointCount; // pas en nombre de marqueurs
+                for (let i = 0; i < pointCount; i++) {
+                    const angle = i * step * 60;
+                    const rad = (angle - 90) * Math.PI / 180;
+                    points.push({
+                        x: centerX + Math.cos(rad) * pointRadius,
+                        y: centerY + Math.sin(rad) * pointRadius,
+                        angle: angle
+                    });
+                }
+            } else {
+                const angleStep = 360 / pointCount;
+                for (let i = 0; i < pointCount; i++) {
+                    const angle = i * angleStep;
+                    const rad = (angle - 90) * Math.PI / 180;
+                    points.push({
+                        x: centerX + Math.cos(rad) * pointRadius,
+                        y: centerY + Math.sin(rad) * pointRadius,
+                        angle: angle
+                    });
+                }
+            }
+
+            // Marqueurs visuels (toujours 6, sur le cercle extérieur)
+            const displayPoints = [];
+            if (showMarkers) {
+                for (let i = 0; i < 6; i++) {
+                    const angle = i * 60;
+                    const rad = (angle - 90) * Math.PI / 180;
+                    displayPoints.push({
+                        x: centerX + Math.cos(rad) * markerRadius,
+                        y: centerY + Math.sin(rad) * markerRadius
+                    });
+                }
+            }
+            
+            const invaderPattern = [
+                [0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0],
+                [0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0],
+                [0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0],
+                [0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0],
+                [0,0,1,1,1,1,0,0,0,1,1,0,0,0,1,1,1,1,0,0],
+                [0,0,0,0,1,1,1,0,1,1,1,1,0,1,1,1,0,0,0,0],
+                [0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0],
+                [0,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,0],
+                [0,0,0,1,0,0,1,1,1,1,1,1,1,1,0,0,1,0,0,0],
+                [0,0,0,1,0,0,1,1,1,1,1,1,1,1,0,0,1,0,0,0],
+                [0,0,0,1,0,0,1,1,1,1,1,1,1,1,0,0,1,0,0,0],
+                [0,0,0,1,0,0,0,1,1,1,1,1,1,0,0,0,1,0,0,0],
+                [0,0,0,1,0,0,0,0,1,1,1,1,0,0,0,0,1,0,0,0],
+                [0,0,0,1,0,0,0,0,0,1,1,0,0,0,0,0,1,0,0,0],
+                [0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0],
+                [0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0],
+                [0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0],
+                [0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            ];
+            
+            const pixelSize = 10;
+            const invaderColor = '#FF1493';
+            const angularSpeed = 300;
+            const pauseDuration = 1300;
+            
+            const anim = {
+                canvas,
+                ctx,
+                centerX,
+                centerY,
+                points,
+                displayPoints,
+                showMarkers,
+                pointCount,
+                mode,
+                invaderPattern,
+                pixelSize,
+                invaderColor,
+                angularSpeed,
+                pauseDuration,
+                currentAngle: points[0].angle,
+                targetPointIndex: 0,
+                isAnimating: true,
+                isRotating: false,
+                animationInterval: null,
+                animationFrame: null,
+                startTime: null,
+                firstResponseTime: null
+            };
+            
+            animations[index] = anim;
+            drawScene(anim);
+        }
+        
+        function drawScene(anim) {
+            anim.ctx.fillStyle = '#0f3460';
+            anim.ctx.fillRect(0, 0, anim.canvas.width, anim.canvas.height);
+
+            // Afficher les marqueurs visuels si la condition le prévoit
+            if (anim.showMarkers) {
+                anim.displayPoints.forEach(point => {
+                    anim.ctx.fillStyle = '#888';
+                    anim.ctx.beginPath();
+                    anim.ctx.arc(point.x, point.y, 8, 0, Math.PI * 2);
+                    anim.ctx.fill();
+                    anim.ctx.strokeStyle = '#666';
+                    anim.ctx.lineWidth = 2;
+                    anim.ctx.stroke();
+                });
+            }
+            
+            anim.ctx.save();
+            anim.ctx.translate(anim.centerX, anim.centerY);
+            anim.ctx.rotate((anim.currentAngle * Math.PI) / 180);
+            
+            const width = anim.invaderPattern[0].length * anim.pixelSize;
+            const height = anim.invaderPattern.length * anim.pixelSize;
+            const centerOffset = height * 0.25;
+            
+            anim.invaderPattern.forEach((row, rowIndex) => {
+                row.forEach((pixel, colIndex) => {
+                    if (pixel === 1) {
+                        anim.ctx.fillStyle = anim.invaderColor;
+                        const px = (colIndex * anim.pixelSize) - width / 2;
+                        const py = (rowIndex * anim.pixelSize) - height / 2 + centerOffset;
+                        anim.ctx.fillRect(px, py, anim.pixelSize, anim.pixelSize);
+                    }
+                });
+            });
+            
+            anim.ctx.restore();
+        }
+        
+        function recordFirstResponse(conditionIndex) {
+            const anim = animations[conditionIndex];
+            if (anim && !anim.firstResponseTime) {
+                anim.firstResponseTime = Date.now();
+            }
+        }
+        
+        function rotateToPointWithAngle(anim, pointIndex, angleDiff, shouldNormalize, onComplete) {
+            anim.targetPointIndex = pointIndex;
+            anim.isRotating = true;
+            const startAngle = anim.currentAngle;
+            const targetAngle = shouldNormalize ? anim.points[pointIndex].angle : (startAngle + angleDiff);
+            const rotationDuration = Math.abs(angleDiff) * anim.angularSpeed / 90;
+            const startTime = Date.now();
+            
+            function animateRotation() {
+                if (!anim.isAnimating) {
+                    anim.isRotating = false;
+                    return;
+                }
+                
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / rotationDuration, 1);
+                
+                const easeProgress = progress < 0.5 
+                    ? 2 * progress * progress 
+                    : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+                
+                anim.currentAngle = startAngle + angleDiff * easeProgress;
+                
+                drawScene(anim);
+                
+                if (progress < 1) {
+                    anim.animationFrame = requestAnimationFrame(animateRotation);
+                } else {
+                    anim.currentAngle = targetAngle;
+                    anim.isRotating = false;
+                    drawScene(anim);
+                    if (onComplete) onComplete();
+                }
+            }
+            
+            animateRotation();
+        }
+        
+        function startAnimation(index) {
+            const anim = animations[index];
+            if (!anim) return;
+            
+            if (!anim.startTime) {
+                anim.startTime = Date.now();
+            }
+            
+            if (anim.animationInterval) {
+                clearTimeout(anim.animationInterval);
+                anim.animationInterval = null;
+            }
+            
+            anim.isAnimating = true;
+            
+            if (anim.isRotating) return;
+            
+            function animate() {
+                if (!anim.isAnimating) return;
+                
+                let nextPoint;
+                let angleDiff;
+                let shouldNormalize;
+                
+                if (anim.mode === 'random') {
+                    const availablePoints = [];
+                    for (let i = 0; i < anim.pointCount; i++) {
+                        if (i !== anim.targetPointIndex) {
+                            availablePoints.push(i);
+                        }
+                    }
+                    nextPoint = availablePoints[Math.floor(Math.random() * availablePoints.length)];
+                    
+                    if (anim.pointCount === 2) {
+                        angleDiff = Math.random() < 0.5 ? 180 : -180;
+                        shouldNormalize = false;
+                    } else {
+                        let targetAngle = anim.points[nextPoint].angle;
+                        angleDiff = targetAngle - anim.currentAngle;
+                        if (angleDiff > 180) angleDiff -= 360;
+                        else if (angleDiff < -180) angleDiff += 360;
+                        shouldNormalize = true;
+                    }
+                } else {
+                    nextPoint = (anim.targetPointIndex + 1) % anim.pointCount;
+                    
+                    if (anim.pointCount === 2) {
+                        angleDiff = 180;
+                        shouldNormalize = false;
+                    } else {
+                        let targetAngle = anim.points[nextPoint].angle;
+                        angleDiff = targetAngle - anim.currentAngle;
+                        if (angleDiff <= 0) angleDiff += 360;
+                        shouldNormalize = true;
+                    }
+                }
+                
+                rotateToPointWithAngle(anim, nextPoint, angleDiff, shouldNormalize, () => {
+                    if (anim.isAnimating) {
+                        anim.animationInterval = setTimeout(() => {
+                            animate();
+                        }, anim.pauseDuration);
+                    }
+                });
+            }
+            
+            animate();
+        }
+        
+        function stopAnimation(index) {
+            const anim = animations[index];
+            if (!anim) return;
+            
+            anim.isAnimating = false;
+            
+            if (anim.animationInterval) {
+                clearTimeout(anim.animationInterval);
+                anim.animationInterval = null;
+            }
+            
+            if (anim.animationFrame) {
+                cancelAnimationFrame(anim.animationFrame);
+                anim.animationFrame = null;
+            }
+        }
+        
+    </script>
+</body>
+</html>
