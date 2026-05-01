@@ -1,5 +1,5 @@
 [build]
   functions = "netlify/functions"
 
-[secrets_scanning]
-  enabled = false
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "NEXTCLOUD_URL,NEXTCLOUD_USER"
