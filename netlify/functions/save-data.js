@@ -16,6 +16,7 @@ exports.handler = async function(event) {
 
     // Construire la ligne CSV à partir des données d'une condition
     const condition = data.condition;
+    const itemTimes = condition.timing.itemResponseTimesMs || {};
     const row = [
         data.participantId,
         data.age,
@@ -31,6 +32,10 @@ exports.handler = async function(event) {
         condition.responses.intelligence,
         condition.timing.totalTimeMs,
         condition.timing.timeToFirstResponseMs,
+        itemTimes.animacy ?? '',
+        itemTimes.intentionality ?? '',
+        itemTimes.predictability ?? '',
+        itemTimes.intelligence ?? '',
         condition.timestamp
     ].join(',');
 
@@ -43,7 +48,7 @@ exports.handler = async function(event) {
     });
 
     let csvContent = '';
-    const header = 'participantId,age,gender,startTime,conditionOrder,points,mode,showMarkers,animacy,intentionality,predictability,intelligence,totalTimeMs,timeToFirstResponseMs,timestamp\n';
+    const header = 'participantId,age,gender,startTime,conditionOrder,points,mode,showMarkers,animacy,intentionality,predictability,intelligence,totalTimeMs,timeToFirstResponseMs,animacyResponseTimeMs,intentionalityResponseTimeMs,predictabilityResponseTimeMs,intelligenceResponseTimeMs,timestamp\n';
 
     if (getResponse.ok) {
         csvContent = await getResponse.text();
